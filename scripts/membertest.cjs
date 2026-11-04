@@ -1,0 +1,32 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ args: ['--no-sandbox'] });
+  const p = await (await b.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+  const errs = [];
+  p.on('pageerror', (e) => errs.push(e.message));
+  await p.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+  await p.getByRole('button', { name: /Frame/ }).first().click();
+  await p.waitForTimeout(600);
+  await p.getByRole('button', { name: /^Joint$/ }).click();
+  const box = await p.locator('div.blueprint svg').first().boundingBox();
+  await p.mouse.click(box.x + box.width * 0.82, box.y + box.height * 0.7);
+  await p.waitForTimeout(500);
+  const afterNode = await p.locator('[data-testid="canvas-stats"]').textContent();
+  await p.getByRole('button', { name: /^Member$/ }).click();
+  const gs = p.locator('[data-node-id]');
+  const cnt = await gs.count();
+  const a = await gs.nth(cnt - 1).boundingBox();
+  const b2 = await gs.nth(1).boundingBox();
+  await p.mouse.click(a.x + a.width / 2, a.y + a.height / 2);
+  await p.waitForTimeout(250);
+  await p.mouse.click(b2.x + b2.width / 2, b2.y + b2.height / 2);
+  await p.waitForTimeout(700);
+  const afterMember = await p.locator('[data-testid="canvas-stats"]').textContent();
+  const unstable = await p.locator('text=/unstable|mechanism/i').count();
+  // delete member with erase tool by clicking its hit line
+  await p.getByRole('button', { name: /Erase/ }).click();
+  const hits = p.locator('[data-member-hit]');
+  const hitCount = await hits.count();
+  console.log(JSON.stringify({ afterNode, cnt, afterMember, hitCount, unstable, errs }, null, 1));
+  await b.close();
+})();

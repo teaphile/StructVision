@@ -1,0 +1,21 @@
+const { chromium } = require('playwright');
+(async () => {
+  const b = await chromium.launch({ args: ['--no-sandbox'] });
+  const p = await (await b.newContext({ viewport: { width: 1280, height: 1000 } })).newPage();
+  const errs = [];
+  p.on('console', m => m.type() === 'error' && errs.push(m.text()));
+  await p.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(500);
+  const diagrams = p.locator('div').filter({ hasText: /Synchronised diagrams/ }).first();
+  await diagrams.scrollIntoViewIfNeeded();
+  await p.waitForTimeout(400);
+  await p.getByText('Hide answers', { exact: true }).first().click();
+  await p.waitForTimeout(500);
+  const peakHidden = await p.getByText(/peak hidden/i).count();
+  await p.screenshot({ path: '/home/user/shots/hide-answers.png' });
+  await p.getByText('Answers hidden', { exact: true }).first().click();
+  await p.waitForTimeout(400);
+  const peakBack = await p.getByText(/peak hidden/i).count();
+  console.log(JSON.stringify({ peakHidden, peakBack, errs }));
+  await b.close();
+})();

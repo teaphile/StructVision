@@ -1,0 +1,22 @@
+# dependencies
+node_modules
+
+# build output
+dist
+dist-ssr
+
+# typescript incremental build cache
+*.tsbuildinfo
+
+# local env and secrets
+.env
+.env.*
+!.env.example
+
+# editor and OS noise
+.DS_Store
+Thumbs.db
+.sudo_as_admin_successful
+
+# vercel local state
+.vercel
